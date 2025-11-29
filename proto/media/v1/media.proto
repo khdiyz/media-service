@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package media.v1;
+
+option go_package = "github.com/khdiyz/media-service/genproto/media/v1;mediav1";
+
+// MediaService provides file storage and retrieval operations
+service MediaService {
+  // Upload uploads a file to storage
+  rpc Upload(UploadRequest) returns (UploadResponse);
+  
+  // UploadStream uploads a file using streaming for large files
+  rpc UploadStream(stream UploadStreamRequest) returns (UploadResponse);
+  
+  // Download downloads a file from storage
+  rpc Download(DownloadRequest) returns (DownloadResponse);
+  
+  // DownloadStream downloads a file using streaming for large files
+  rpc DownloadStream(DownloadRequest) returns (stream DownloadStreamResponse);
+  
+  // Delete removes a file from storage
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  
+  // GetURL returns the public URL for a file
+  rpc GetURL(GetURLRequest) returns (GetURLResponse);
+  
+  // GetFileInfo retrieves metadata about a file
+  rpc GetFileInfo(GetFileInfoRequest) returns (GetFileInfoResponse);
+}
+
+// UploadRequest contains file data for upload
+message UploadRequest {
+  string file_name = 1;        // Original file name
+  bytes content = 2;           // File content
+  string content_type = 3;     // MIME type (e.g., "image/jpeg")
+  map<string, string> metadata = 4; // Optional metadata
+}
+
+// UploadStreamRequest for streaming file uploads
+message UploadStreamRequest {
+  oneof data {
+    FileMetadata metadata = 1;  // First message contains metadata
+    bytes chunk = 2;             // Subsequent messages contain chunks
+  }
+}
+
+// FileMetadata contains file information
+message FileMetadata {
+  string file_name = 1;
+  string content_type = 2;
+  int64 file_size = 3;
+  map<string, string> metadata = 4;
+}
+
+// UploadResponse returns the uploaded file information
+message UploadResponse {
+  string file_path = 1;        // Storage path/key
+  string url = 2;              // Public URL
+  int64 file_size = 3;         // File size in bytes
+  string uploaded_at = 4;      // Upload timestamp (RFC3339)
+}
+
+// DownloadRequest specifies which file to download
+message DownloadRequest {
+  string file_path = 1;        // Storage path/key
+}
+
+// DownloadResponse returns the file data
+message DownloadResponse {
+  string file_name = 1;        // Original file name
+  bytes content = 2;           // File content
+  string content_type = 3;     // MIME type
+  int64 file_size = 4;         // File size in bytes
+}
+
+// DownloadStreamResponse for streaming file downloads
+message DownloadStreamResponse {
+  oneof data {
+    FileMetadata metadata = 1;  // First message contains metadata
+    bytes chunk = 2;             // Subsequent messages contain chunks
+  }
+}
+
+// DeleteRequest specifies which file to delete
+message DeleteRequest {
+  string file_path = 1;        // Storage path/key
+}
+
+// DeleteResponse confirms deletion
+message DeleteResponse {
+  bool success = 1;            // Whether deletion was successful
+  string message = 2;          // Optional message
+}
+
+// GetURLRequest specifies which file URL to retrieve
+message GetURLRequest {
+  string file_path = 1;        // Storage path/key
+}
+
+// GetURLResponse returns the file URL
+message GetURLResponse {
+  string url = 1;              // Public URL
+  string expires_at = 2;       // Expiration time if applicable (RFC3339)
+}
+
+// GetFileInfoRequest specifies which file info to retrieve
+message GetFileInfoRequest {
+  string file_path = 1;        // Storage path/key
+}
+
+// GetFileInfoResponse returns file metadata
+message GetFileInfoResponse {
+  string file_path = 1;        // Storage path/key
+  string file_name = 2;        // Original file name
+  string content_type = 3;     // MIME type
+  int64 file_size = 4;         // File size in bytes
+  string url = 5;              // Public URL
+  string created_at = 6;       // Creation timestamp (RFC3339)
+  map<string, string> metadata = 7; // Custom metadata
+}
